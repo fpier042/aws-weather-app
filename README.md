@@ -34,11 +34,11 @@ The user must have:
       AWS_SECRET_ACCESS_KEY=your_aws-secret_access_key
       AWS_DEFAULT_REGION=your_aws_default_region
 
-4.Configure the AWS credentials:
-  bash Copyaws configure
+4. Configure the AWS credentials:
+   bash Copyaws configure
 
 5. Run the application:
-  python src/weather_dashboard.py
+   python src/weather_dashboard.py
     
 6. Build the docker image:
 
