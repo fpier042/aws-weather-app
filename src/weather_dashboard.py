@@ -21,12 +21,12 @@ class WeatherDashboard:
             print(f"Bucket {self.bucket_name} exists")
         except:
             print(f"Creating bucket {self.bucket_name}")
-        try:
-            # Simpler creation for us-east-1
-            self.s3_client.create_bucket(Bucket=self.bucket_name)
-            print(f"Successfully created bucket {self.bucket_name}")
-        except Exception as e:
-            print(f"Error creating bucket: {e}")
+            try:
+                # Simpler creation for us-east-1
+                self.s3_client.create_bucket(Bucket=self.bucket_name)
+                print(f"Successfully created bucket {self.bucket_name}")
+            except Exception as e:
+                print(f"Error creating bucket: {e}")
 
     def fetch_weather(self, city):
         """Fetch weather data from OpenWeather API"""
@@ -36,7 +36,6 @@ class WeatherDashboard:
             "appid": self.api_key,
             "units": "imperial"
         }
-        
         try:
             response = requests.get(base_url, params=params)
             response.raise_for_status()
@@ -49,7 +48,7 @@ class WeatherDashboard:
         """Save weather data to S3 bucket"""
         if not weather_data:
             return False
-            
+        
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
         file_name = f"weather-data/{city}-{timestamp}.json"
         
@@ -67,17 +66,11 @@ class WeatherDashboard:
             print(f"Error saving to S3: {e}")
             return False
 
-def main():
-    dashboard = WeatherDashboard()
-    
-    # Create bucket if needed
-    dashboard.create_bucket_if_not_exists()
-    
-    cities = ["Philadelphia", "Seattle", "New York", "Miami"]
-    
-    for city in cities:
+    def get_weather_for_city(self, city):
+        """Get and display weather for a single city"""
         print(f"\nFetching weather for {city}...")
-        weather_data = dashboard.fetch_weather(city)
+        weather_data = self.fetch_weather(city)
+        
         if weather_data:
             temp = weather_data['main']['temp']
             feels_like = weather_data['main']['feels_like']
@@ -90,11 +83,49 @@ def main():
             print(f"Conditions: {description}")
             
             # Save to S3
-            success = dashboard.save_to_s3(weather_data, city)
+            success = self.save_to_s3(weather_data, city)
             if success:
                 print(f"Weather data for {city} saved to S3!")
+            return True
         else:
             print(f"Failed to fetch weather data for {city}")
+            return False
+
+def main():
+    dashboard = WeatherDashboard()
+    
+    # Create bucket if needed
+    dashboard.create_bucket_if_not_exists()
+    
+    while True:
+        print("\nWeather Dashboard Menu:")
+        print("1. Get weather for a city")
+        print("2. Get weather for multiple cities")
+        print("3. Exit")
+        
+        choice = input("Enter your choice (1-3): ")
+        
+        if choice == "1":
+            city = input("Enter city name: ")
+            dashboard.get_weather_for_city(city)
+        
+        elif choice == "2":
+            cities = []
+            while True:
+                city = input("Enter city name (or 'done' to finish): ")
+                if city.lower() == 'done':
+                    break
+                cities.append(city)
+            
+            for city in cities:
+                dashboard.get_weather_for_city(city)
+        
+        elif choice == "3":
+            print("Goodbye!")
+            break
+        
+        else:
+            print("Invalid choice. Please try again.")
 
 if __name__ == "__main__":
     main()
