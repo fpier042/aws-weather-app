@@ -218,6 +218,6 @@ Contributions are what allow for the open-source community to serve as a valuabl
 
 ## 📲 Contact Information
 
-Felton Pierre: [Linkedin](www.linkedin.com/in/felton-pierre)
+Felton Pierre: [Linkedin](www.linkedin.com/in/felton-pierre-90)
 
 Project Link: https://github.com/fpier042/aws-weather-app/
