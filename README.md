@@ -71,7 +71,6 @@ Before beginning the project, ensure you have the following set up on your machi
 
 And here are some general resources to provide you further context and ground you as you move through the project:
 
-- [OpenWeather API Documentation](https://openweathermap.org/api): Learn more about the OpenWeather API
 - [AWS S3 Documentation](https://docs.aws.amazon.com/s3/index.html): How to use AWS S3
 - [AWS CLI Configuration](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html): How to configure the AWS CLI 
 - [Docker Installation Guide](https://docs.docker.com/get-docker/): How to install Docker
@@ -101,16 +100,18 @@ And here are some general resources to provide you further context and ground yo
 
   Reminder: The application utilizes the AWS CLI to interact with AWS S3. Double-check that your AWS credentials are properly set up in 
   the **.env** file.
-    ```
+  ```
    AWS CREDENTIALS
       AWS_ACCESS_KEY_ID=your_aws_secret_key_id
       AWS_SECRET_ACCESS_KEY=your_aws-secret_access_key
       AWS_DEFAULT_REGION=your_aws_default_region
-        ```
+  ```
       
   Then input the following command in your IDE:
-      
+  ```
+    
       bash copyaws configure 
+  ```
    
 ## 🔋 Usage
 
