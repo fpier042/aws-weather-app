@@ -112,6 +112,18 @@ And here are some general resources to provide you further context and ground yo
     
       bash copyaws configure 
   ```
+
+
+Below is a screenshot of the Python script running from my terminal:
+![result from terminal](Images/codeouput.png)
+
+Next, I verified the bucket creation using the AWS Console:
+![Bucket creation verification](Images/bucketcreation.png)
+
+Lastly, here are the images verifying our weather JSON data stored in the bucket:
+![weather data verification](Images/weatherresult1.png)
+
+![weather data verification](Images/weatherresult2.png)
    
 ## 🔋 Usage
 
