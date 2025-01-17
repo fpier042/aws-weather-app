@@ -106,11 +106,9 @@ And here are some general resources to provide you further context and ground yo
       AWS_SECRET_ACCESS_KEY=your_aws-secret_access_key
       AWS_DEFAULT_REGION=your_aws_default_region
   ```
-      
-  Then input the following command in your IDE:
-  ```
-    
-      bash copyaws configure 
+  
+  Either add your AWS credentials in the .env file in your IDE or use the command 'aws configure' to add it directly to ~/.aws/credentials in AWS CLI.
+  
   ```
    
 ## 🔋 Usage
