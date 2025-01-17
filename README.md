@@ -18,7 +18,7 @@
 
 ## 👨🏾‍💻 Project Intro
 
-The following code is for an interactive Python application allowing users to fetch and display current (real-time and location-based) weather data for multiple cities. It utilizes the OpenWeather API (application programming interface) to retrieve factual weather information and stores this data in an AWS S3 bucket.
+The following code is for an interactive Python application allowing users to fetch and display current (real-time and location-based) weather data for multiple cities. It utilizes the OpenWeather API (application programming interface) to retrieve factual weather information, stores this data in an AWS S3 bucket, and also generates an HTML file of this data.
 
 This project demonstrates how to integrate various technologies and services, including:
 - Python programming 🐍
@@ -65,6 +65,7 @@ Before beginning the project, ensure you have the following set up on your machi
 - An AWS account with S3 access
 - AWS CLI (command line interface) configured with appropriate permissions
 - A GitHub account with SSH authentication [https://docs.github.com/en/authentication/connecting-to-github-with-ssh]
+- HTML CSS
 - Docker
   
 ### 📘 User Guides
@@ -127,6 +128,10 @@ To run the Weather Dashboard-Application in Python:
 
 3. Follow the prompts to enter a city name or use the default list of cities
 
+4. As well, the generated HTML file will also be pushed to your S3 bucket and you can also visualize it this way by opening the file in
+   your browser.
+
+
 ## 📝 Code Explanation 📝
 
 ### weather_dashboard.py
@@ -151,6 +156,12 @@ This is the core of the application. Its main components are:
    - Handles user input for city selection.
    - Orchestrates the weather data fetching and saving process.
    - Displays the weather information to the user.
+
+6.  `generate_html` method:
+   - Generates an HTML file to visualize weather data
+
+7.  `save_html_to_s3` method:
+    - Saves the HTML file to an S3 bucket
 
 ### check_env_vars.py
 
@@ -180,7 +191,7 @@ Here are some challenges you might encounter:
 
 2. **S3 Bucket Permission Issues**
    - Issue: Access denied when creating or accessing S3 bucket
-   - Solution: Verify IAM user has appropriate S3 permissions (AmazonS3FullAccess or custom policy)
+   - Solution: Verify IAM user has appropriate S3 permissions (AmazonS3FullAccess or a custom policy)
 
 3. **Environment Variables Not Loading**
    - Issue: Application unable to access environment variables
