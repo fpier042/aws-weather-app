@@ -1,4 +1,4 @@
-# 🌤️ AWS (Amazon Web Services) Weather Dashboard-Application ☔️
+# 🌤️ AWS (Amazon Web Services) Weather Dashboard-Application ☔️ (30 Days Dev Ops Challenge)
 
 ## 📖 Table of Contents 📖
 - [Project Intro](#project-intro)
@@ -20,14 +20,14 @@
 
 The following code is for an interactive Python application allowing users to fetch and display current (real-time and location-based) weather data for multiple cities. It utilizes the OpenWeather API (application programming interface) to retrieve factual weather information, stores this data in an AWS S3 bucket, and also generates an HTML file of this data.
 
-This project demonstrates how to integrate various technologies and services, including:
+This project taught me (and demonstrates to other learners) how to integrate various technologies and services, including:
 - Python programming 🐍
 - API integration (OpenWeather) ⛈️
 - AWS services (S3, IAM) 🚚
 - Environment variable management 🌱
 - Asynchronous programming ⛓️‍💥
 
-And this project aims to provide the user valuable insight into how best to create a functional, cloud-integrated application, whether you're a developer learning more about Python and AWS, or someone who simply likes to nerd out about the weather!   
+And aims to provide the user valuable insight into how best to create a functional, cloud-integrated application, whether you're a developer learning more about Python and AWS (like myself), or someone who simply likes to nerd out about the weather!   
 
 ## ⚙️ Project Structure
 
