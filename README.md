@@ -1,4 +1,4 @@
-# 🌤️ AWS (Amazon Web Services) Weather Dashboard-Application ☔️ (30 Days Dev Ops Challenge)
+# 🌤️ AWS (Amazon Web Services) Weather Dashboard ☔️ (30 Days Dev Ops Challenge)
 
 ## 📖 Table of Contents 📖
 - [Project Intro](#project-intro)
@@ -7,10 +7,11 @@
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [User Guides](#user-guides)
-  - [Installation Process](#installation-process)
-- [Usage](#usage)
+- [Installation Process](#installation-process)
+- [Application Usage](#application-usage)
 - [Code Explanation](#code-explanation)
 - [Incorporating Docker](#incorporating-docker)
+- [Common Issues and Solutions](#common-issues-solutions)
 - [Potential Future Improvements](#potential-future-improvements)
 - [How to Contribute](#how-to-contribute)
 - [License](#license)
@@ -99,8 +100,7 @@ And here are some general resources to provide you further context and ground yo
 
 4. Configure your AWS credentials:
 
-  Reminder: The application utilizes the AWS CLI to interact with AWS S3. Double-check that your AWS credentials are properly set up in 
-  the **.env** file.
+  Double-check that your AWS credentials are properly set up in the **.env** file.
   ```
    AWS CREDENTIALS
       AWS_ACCESS_KEY_ID=your_aws_secret_key_id
@@ -108,13 +108,12 @@ And here are some general resources to provide you further context and ground yo
       AWS_DEFAULT_REGION=your_aws_default_region
   ```
   
-  Either add your AWS credentials in the .env file in your IDE or use the command 'aws configure' to add it directly to ~/.aws/credentials in AWS CLI.
-  
-  ```
-   
+  Reminder: The application also utilizes the AWS CLI to interact with AWS S3. Use the command 'aws configure' to add it directly to 
+  ~/.aws/credentials in AWS CLI.
+     
 ## 🔋 Usage
 
-To run the Weather Dashboard-Application in Python:
+To run the Weather Dashboard in Python:
 
 1. Navigate to the project directory
    ```bash
@@ -130,7 +129,6 @@ To run the Weather Dashboard-Application in Python:
 
 4. As well, the generated HTML file will also be pushed to your S3 bucket and you can also visualize it this way by opening the file in
    your browser.
-
 
 ## 📝 Code Explanation 📝
 
@@ -169,7 +167,7 @@ This is a utility script ensuring that all necessary environment variables are p
 
 ## Incorporating Docker ⚓️
 
-Finally, to run the Weather Dashboard-Application in Docker:
+Finally, to run the Weather Dashboard in Docker:
     
 1. Build the docker image:
 
@@ -201,10 +199,6 @@ Here are some challenges you might encounter:
    - Issue: Unable to push code to repository
    - Solution: Follow the SSH key setup guide in the prerequisites section
 
-## 🪪License
-
-This is a project licensed under MIT
-
 ## 🛸 Potential Future Improvements
 
 1. Implement a graphical user interface (GUI) for a more interactive experience
@@ -224,6 +218,10 @@ Contributions are what allow for the open-source community to serve as a valuabl
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+## 🪪License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 📲 Contact Information
 
