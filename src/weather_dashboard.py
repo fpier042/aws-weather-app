@@ -4,58 +4,56 @@ import boto3
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
+from flask import Flask, render_template_string
 
-# Load environment variables from the .env file
-load_dotenv()
+app = Flask(__name__)
 
 class WeatherDashboard:
     def __init__(self):
+        required_vars = [
+            'OPENWEATHER_API_KEY', 'AWS_BUCKET_NAME', 
+            'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_DEFAULT_REGION'
+        ]
+        missing_vars = [var for var in required_vars if not os.getenv(var)]
+        if missing_vars:
+            raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+
         self.api_key = os.getenv('OPENWEATHER_API_KEY')
         self.bucket_name = os.getenv('AWS_BUCKET_NAME')
-        self.s3_client = boto3.client('s3')
+        self.s3_client = boto3.client(
+            's3',
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+            region_name=os.getenv('AWS_DEFAULT_REGION')
+        )
 
     def create_bucket_if_not_exists(self):
-        """Create S3 bucket if it doesn't exist"""
         try:
             self.s3_client.head_bucket(Bucket=self.bucket_name)
             print(f"Bucket {self.bucket_name} exists")
-        except:
-            print(f"Creating bucket {self.bucket_name}")
-        try:
-            # Simpler creation for us-east-1
-            self.s3_client.create_bucket(Bucket=self.bucket_name)
-            print(f"Successfully created bucket {self.bucket_name}")
-        except Exception as e:
-            print(f"Error creating bucket: {e}")
+        except self.s3_client.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                print(f"Creating bucket {self.bucket_name}")
+                self.s3_client.create_bucket(Bucket=self.bucket_name)
+            else:
+                print(f"Error checking bucket: {e}")
 
     def fetch_weather(self, city):
-        """Fetch weather data from OpenWeather API"""
         base_url = "http://api.openweathermap.org/data/2.5/weather"
-        params = {
-            "q": city,
-            "appid": self.api_key,
-            "units": "imperial"  # "units": "metric" for Celsius
-        }
-        
+        params = {"q": city, "appid": self.api_key, "units": "imperial"}
         try:
             response = requests.get(base_url, params=params)
             response.raise_for_status()
             return response.json()
-            weather_data['city'] = city  # Add city name to the data
-            print(f"Fetched data for {city}: {weather_data}")  # Debugging: print weather data
-            return weather_data
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching weather data: {e}")
-            return None
-        
+            print(f"Error fetching weather data for {city}: {e}")
+            return {"error": str(e)}
+
     def save_to_s3(self, weather_data, city):
-        """Save weather data to S3 bucket"""
-        if not weather_data:
+        if not weather_data or "error" in weather_data:
             return False
-            
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
         file_name = f"weather-data/{city}-{timestamp}.json"
-        
         try:
             weather_data['timestamp'] = timestamp
             self.s3_client.put_object(
@@ -64,116 +62,134 @@ class WeatherDashboard:
                 Body=json.dumps(weather_data),
                 ContentType='application/json'
             )
-            print(f"Successfully saved data for {city} to S3")
+            print(f"Successfully saved JSON data for {city} to S3")
             return True
         except Exception as e:
-            print(f"Error saving to S3: {e}")
+            print(f"Error saving JSON to S3: {e}")
             return False
 
-    def generate_html(self, weather_data):
-            """Generate an HTML file to visualize weather data"""
-            html_content = """
-            <html>
-            <head>
-                <title>Weather Dashboard</title>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background-color: #f4f4f4; }
-                </style>
-            </head>
-            <body>
-                <h1>Weather Dashboard</h1>
-                <table>
-                    <tr>
-                        <th>City</th>
-                        <th>Temperature (°F)</th>
-                        <th>Feels Like (°F)</th>
-                        <th>Conditions</th>
-                        <th>Humidity (%)</th>
-                        <th>Wind Speed (m/s)</th>
-                        <th>Timestamp</th>
-                    </tr>
-            """
-            for data in weather_data:
+    def generate_html(self, weather_data_list):
+        html_content = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Weather Dashboard</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                table { border-collapse: collapse; width: 100%; max-width: 800px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+                h1 { color: #333; }
+            </style>
+        </head>
+        <body>
+            <h1>Weather Dashboard</h1>
+            <table>
+                <tr>
+                    <th>City</th>
+                    <th>Temperature (°F)</th>
+                    <th>Feels Like (°F)</th>
+                    <th>Humidity (%)</th>
+                    <th>Conditions</th>
+                    <th>Timestamp</th>
+                </tr>
+        """
+        for data in weather_data_list:
+            if "error" not in data:
+                city = data.get('name', 'Unknown')
+                temp = data['main'].get('temp', 'N/A')
+                feels_like = data['main'].get('feels_like', 'N/A')
+                humidity = data['main'].get('humidity', 'N/A')
+                description = data['weather'][0].get('description', 'N/A') if data.get('weather') else 'N/A'
+                timestamp = data.get('timestamp', 'N/A')
                 html_content += f"""
-                    <tr>
-                        <td>{data['name']}</td>
-                        <td>{data['main']['temp']}</td>
-                        <td>{data['main']['feels_like']}</td>
-                        <td>{data['weather'][0]['description']}</td>
-                        <td>{data['main']['humidity']}</td>
-                        <td>{data['wind']['speed']}</td>
-                        <td>{data['timestamp']}</td>
-                    </tr>
+                <tr>
+                    <td>{city}</td>
+                    <td>{temp}</td>
+                    <td>{feels_like}</td>
+                    <td>{humidity}</td>
+                    <td>{description}</td>
+                    <td>{timestamp}</td>
+                </tr>
                 """
-            html_content += """
-                </table>
-            </body>
-            </html>
-            """
-            
-            html_file_path = "weather_dashboard.html"
-            with open("weather_dashboard.html", "w") as file:
-                file.write(html_content)
-            print("HTML file generated: weather_dashboard.html")
-            return html_file_path
-    
-    def save_html_to_s3(self, html_file_path):
-        """Save the HTML file to the S3 bucket"""
-        file_name = "weather-dashboard.html"
+        html_content += """
+            </table>
+        </body>
+        </html>
+        """
+        return html_content
+
+    def save_html_to_s3(self, html_content):
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        file_name = f"weather-dashboard-{timestamp}.html"
         try:
-            with open(html_file_path, "rb") as file:
-                self.s3_client.put_object(
-                    Bucket=self.bucket_name,
-                    Key=file_name,
-                    Body=file,
-                    ContentType='text/html'
-                )
-            print(f"HTML file successfully uploaded to S3: {file_name}")
+            self.s3_client.put_object(
+                Bucket=self.bucket_name,
+                Key=file_name,
+                Body=html_content.encode('utf-8'),
+                ContentType='text/html'
+            )
+            print(f"Successfully saved HTML dashboard to S3 as {file_name}")
+            return True
         except Exception as e:
-            print(f"Error uploading HTML to S3: {e}")
+            print(f"Error saving HTML to S3: {e}")
+            return False
 
-
-
-def main():
+def fetch_and_save():
     dashboard = WeatherDashboard()
-    
-    # Create bucket if needed
     dashboard.create_bucket_if_not_exists()
-    
-    cities = ["Philadelphia", "Seattle", "New York", "Miami", "Ottawa", "Tokyo"]
-    weather_data_list = [ ]
-    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    cities_file = os.path.join(script_dir, '..', 'data', 'cities.json')
+    try:
+        with open(cities_file) as file_input:
+            data = json.load(file_input)
+            cities = data['cities']
+    except (FileNotFoundError, json.JSONDecodeError):
+        print("cities.json not found or invalid, using default cities")
+        cities = ["Philadelphia", "Seattle", "New York"]
+
+    weather_data_list = []
     for city in cities:
         print(f"\nFetching weather for {city}...")
         weather_data = dashboard.fetch_weather(city)
-        if weather_data:
+        if weather_data and "error" not in weather_data:
             temp = weather_data['main']['temp']
             feels_like = weather_data['main']['feels_like']
             humidity = weather_data['main']['humidity']
             description = weather_data['weather'][0]['description']
-            
             print(f"Temperature: {temp}°F")
             print(f"Feels like: {feels_like}°F")
             print(f"Humidity: {humidity}%")
             print(f"Conditions: {description}")
-            
-            # Save to S3
-            success = dashboard.save_to_s3(weather_data, city)
-            if success:
-                print(f"Weather data for {city} saved to S3!")
-                weather_data['city'] = city  # Add city name for visualization
-                weather_data_list.append(weather_data)
-        else:
-            print(f"Failed to fetch weather data for {city}")
-    
-    # Generate HTML file
-    html_file_path = dashboard.generate_html(weather_data_list)
-    # Save HTML to S3
-    dashboard.save_html_to_s3(html_file_path) 
+            dashboard.save_to_s3(weather_data, city)
+        weather_data_list.append(weather_data)
 
+    html_content = dashboard.generate_html(weather_data_list)
+    dashboard.save_html_to_s3(html_content)
+    return weather_data_list
+
+@app.route('/')
+def display_weather():
+    weather_data_list = fetch_and_save()
+    html = """
+    <h1>Weather Dashboard</h1>
+    <table border="1">
+        <tr><th>City</th><th>Temp (°F)</th><th>Feels Like (°F)</th><th>Humidity (%)</th><th>Conditions</th></tr>
+        {% for data in weather_data %}
+            {% if "error" not in data %}
+                <tr>
+                    <td>{{ data.name }}</td>
+                    <td>{{ data.main.temp }}</td>
+                    <td>{{ data.main.feels_like }}</td>
+                    <td>{{ data.main.humidity }}</td>
+                    <td>{{ data.weather[0].description }}</td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+    """
+    return render_template_string(html, weather_data=weather_data_list)
 
 if __name__ == "__main__":
-    main()
+    app.run(host='0.0.0.0', port=5001)
