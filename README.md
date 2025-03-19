@@ -20,7 +20,7 @@
 
 ## 👨🏾‍💻 Project Intro
 
-The following code is for an interactive Python web application allowing users to fetch and display current (real-time and location-based) weather data for multiple cities. It utilizes the OpenWeather API (application programming interface) to retrieve factual weather information, stores this data in an AWS S3 bucket, and also generates an HTML file of this data.
+The following code is for an interactive web application (using Python and Flask) that allows users to fetch and display current (real-time and location-based) weather data for multiple cities. It utilizes the OpenWeather API (application programming interface) to retrieve factual weather information, stores this data in an AWS S3 bucket, and also generates an HTML file of this data.
 
 This project taught me (and demonstrates to other learners) how to integrate various technologies and services, including:
 
@@ -31,7 +31,7 @@ This project taught me (and demonstrates to other learners) how to integrate var
 - Web application development, with Flask 🌐
 - Docker containerization ⚓️
 
-And aims to provide the user valuable insight into how best to create a functional, cloud-integrated application, whether you're a developer learning more about Python and AWS (like myself), or someone who simply likes to nerd out about the weather!
+And aims to provide the user valuable insight into how best to create a functional web application which is also cloud-integrated, whether you're a developer learning more about Python and AWS (like myself), or someone who simply likes to nerd out about the weather!
 
 ## ⚙️ Project Structure
 
