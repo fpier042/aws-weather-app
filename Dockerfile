@@ -1,8 +1,6 @@
 FROM python:3.9-slim
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY src/ ./src/
-COPY data/ ./data/
-
-EXPOSE 5001
+COPY . /app
+RUN pip install flask requests python-dotenv
+EXPOSE 5000
+CMD ["python", "weather_dashboard.py"]

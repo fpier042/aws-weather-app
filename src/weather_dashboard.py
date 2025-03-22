@@ -1,11 +1,14 @@
 import os
 import json
 import requests
+import random
 from datetime import datetime
 from dotenv import load_dotenv
-from flask import Flask, render_template_string
+from flask import Flask, render_template, request, session, jsonify, redirect, url_for
 
-app = Flask(__name__)
+load_dotenv()
+app = Flask(__name__, template_folder='templates', static_folder='static')
+app.secret_key = os.getenv('SECRET_KEY', 'dev_secret_key')
 
 POPULAR_CITIES = [
     "New York", "London", "Tokyo", "Paris", "Sydney", "Berlin", "Toronto", 
@@ -18,94 +21,127 @@ POPULAR_CITIES = [
     "Auckland", "Jerusalem", "Honolulu", "Havana"
 ]
 
+WEATHER_REGIONS = {
+    "North America": ["New York", "Chicago", "Los Angeles", "Toronto"],
+    "Europe": ["London", "Paris", "Berlin", "Rome"],
+    "Asia": ["Tokyo", "Beijing", "Singapore", "Mumbai"],
+    "Oceania": ["Sydney", "Auckland", "Melbourne", "Wellington"],
+    "Africa": ["Cairo", "Cape Town", "Nairobi", "Lagos"],
+    "South America": ["Rio de Janeiro", "Buenos Aires", "Lima", "Santiago"]
+}
+
+class WeatherService:
+    def __init__(self):
         self.api_key = os.getenv('OPENWEATHER_API_KEY')
-        self.bucket_name = os.getenv('AWS_BUCKET_NAME')
-        self.s3_client = boto3.client(
-            's3',
-            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-            region_name=os.getenv('AWS_DEFAULT_REGION')
-        )
-
-    def create_bucket_if_not_exists(self):
-        try:
-            self.s3_client.head_bucket(Bucket=self.bucket_name)
-            print(f"Bucket {self.bucket_name} exists")
-        except self.s3_client.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == '404':
-                print(f"Creating bucket {self.bucket_name}")
-                self.s3_client.create_bucket(Bucket=self.bucket_name)
-            else:
-                print(f"Error checking bucket: {e}")
-
+        if not self.api_key:
+            raise ValueError("Missing OPENWEATHER_API_KEY")
+    
     def fetch_weather(self, city):
-        base_url = "http://api.openweathermap.org/data/2.5/weather"
+        url = "http://api.openweathermap.org/data/2.5/weather"
         params = {"q": city, "appid": self.api_key, "units": "imperial"}
         try:
-            response = requests.get(base_url, params=params)
+            response = requests.get(url, params=params)
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            data['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            return data
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching weather data for {city}: {e}")
-            return {"error": str(e)}
+            print(f"Error fetching weather for {city}: {e}")
+            return {"error": str(e), "city": city}
 
+weather_service = WeatherService()
 
-    def save_html_to_s3(self, html_content):
-        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-        file_name = f"weather-dashboard-{timestamp}.html"
-        try:
-            self.s3_client.put_object(
-                Bucket=self.bucket_name,
-                Key=file_name,
-                Body=html_content.encode('utf-8'),
-                ContentType='text/html'
-            )
-            print(f"Successfully saved HTML dashboard to S3 as {file_name}")
-            return True
-        except Exception as e:
-            print(f"Error saving HTML to S3: {e}")
-            return False
+def get_random_cities(count=4):
+    return random.sample(POPULAR_CITIES, min(count, len(POPULAR_CITIES)))
 
+def fetch_weather_data(cities):
+    return [weather_service.fetch_weather(city) for city in cities]
 
-    weather_data_list = []
-    for city in cities:
-        print(f"\nFetching weather for {city}...")
-        weather_data = dashboard.fetch_weather(city)
+def get_weather_highlights():
+    highlights = {}
+    for region, cities in WEATHER_REGIONS.items():
+        city = random.choice(cities)
+        weather_data = weather_service.fetch_weather(city)
         if weather_data and "error" not in weather_data:
-            temp = weather_data['main']['temp']
-            feels_like = weather_data['main']['feels_like']
-            humidity = weather_data['main']['humidity']
-            description = weather_data['weather'][0]['description']
-            print(f"Temperature: {temp}°F")
-            print(f"Feels like: {feels_like}°F")
-            print(f"Humidity: {humidity}%")
-            print(f"Conditions: {description}")
-            dashboard.save_to_s3(weather_data, city)
-        weather_data_list.append(weather_data)
+            highlights[region] = weather_data
+    return highlights
 
-    return weather_data_list
+def get_extreme_weather():
+    sample_cities = [city for cities in WEATHER_REGIONS.values() for city in cities[:2]]
+    all_weather = [d for d in fetch_weather_data(sample_cities) if "error" not in d]
+    if not all_weather:
+        return {}
+    return {
+        "hottest": max(all_weather, key=lambda x: x.get('main', {}).get('temp', -999)),
+        "coldest": min(all_weather, key=lambda x: x.get('main', {}).get('temp', 999)),
+        "windiest": max(all_weather, key=lambda x: x.get('wind', {}).get('speed', -999)),
+        "most_humid": max(all_weather, key=lambda x: x.get('main', {}).get('humidity', -999))
+    }
 
 @app.route('/')
-def display_weather():
-    weather_data_list = fetch_and_save()
-    html = """
-    <h1>Weather Dashboard</h1>
-    <table border="1">
-        <tr><th>City</th><th>Temp (°F)</th><th>Feels Like (°F)</th><th>Humidity (%)</th><th>Conditions</th></tr>
-        {% for data in weather_data %}
-            {% if "error" not in data %}
-                <tr>
-                    <td>{{ data.name }}</td>
-                    <td>{{ data.main.temp }}</td>
-                    <td>{{ data.main.feels_like }}</td>
-                    <td>{{ data.main.humidity }}</td>
-                    <td>{{ data.weather[0].description }}</td>
-                </tr>
-            {% endif %}
-        {% endfor %}
-    </table>
-    """
-    return render_template_string(html, weather_data=weather_data_list)
+def home():
+    # Always get fresh extreme weather data
+    extreme_weather = get_extreme_weather()
+    
+    if 'random_cities' not in session:
+        session['random_cities'] = get_random_cities()
+    if 'region_highlights' not in session:
+        session['region_highlights'] = get_weather_highlights()
+    
+    current_time = datetime.now().strftime('%A, %B %d, %Y %I:%M %p')
+    return render_template(
+        'home.html',
+        current_time=current_time,
+        random_cities=session['random_cities'],
+        region_highlights=session['region_highlights'],
+        extreme_weather=extreme_weather  # Use the freshly generated data
+    )
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5001)
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    if request.method == 'GET':
+        city = request.args.get('city', '').strip()
+    else:
+        city = request.form.get('city', '').strip()
+    if not city:
+        return redirect(url_for('home'))
+    
+    weather_data = fetch_weather_data([city])
+    if 'cities' not in session:
+        session['cities'] = []
+    if city.lower() not in [c.lower() for c in session['cities']]:
+        session['cities'].append(city)
+        if len(session['cities']) > 8:
+            session['cities'].pop(0)
+    
+    city_weather_data = fetch_weather_data([c for c in session['cities'] if c.lower() != city.lower()])
+    current_time = datetime.now().strftime('%A, %B %d, %Y %I:%M %p')
+    return render_template(
+        'search_results.html',
+        city=city,
+        weather=weather_data[0] if weather_data else None,
+        city_weather_data=city_weather_data,
+        random_cities=session.get('random_cities', get_random_cities()),
+        current_time=current_time
+    )
+
+@app.route('/refresh')
+def refresh():
+    session.pop('region_highlights', None)
+    session.pop('random_cities', None)
+    return redirect(url_for('home'))
+
+@app.route('/remove_city/<city>', methods=['POST'])
+def remove_city(city):
+    if 'cities' in session and city in session['cities']:
+        session['cities'].remove(city)
+        session.modified = True
+        return jsonify({'success': True})
+    return jsonify({'success': False})
+
+@app.template_filter('now')
+def filter_now(format_string):
+    return datetime.now().strftime(format_string) if format_string != 'year' else datetime.now().year
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5001, debug=True)

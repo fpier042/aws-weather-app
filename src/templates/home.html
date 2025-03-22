@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Weather Dashboard - Home{% endblock %}
+{% block content %}
+
+<section class="intro-section">
+    <h2>Welcome to Dynamic Weather Dashboard</h2>
+    <div class="intro-text">
+        <p>Real-time weather at your fingertips—search any city or dive into global highlights and extremes below. Our color-coded cards make conditions pop: cold blues, warm oranges, and humid purples guide you at a glance.</p>
+    </div>
+    <div class="features">
+        <h3>Features:</h3>
+        <ul>
+            <li>Search weather for any city worldwide</li>
+            <li>Track temperature, humidity, wind, and more</li>
+            <li>See highlights across six continents</li>
+            <li>Spot extreme conditions instantly</li>
+        </ul>
+    </div>
+
+    <div class="color-guide">
+        <h3>Card Color Guide:</h3>
+        <div class="color-codes">
+            <div class="color-item cold">
+                <span class="color-swatch"></span>
+                <span class="color-desc">Cold: Below 50°F</span>
+            </div>
+            <div class="color-item moderate">
+                <span class="color-swatch"></span>
+                <span class="color-desc">Moderate: 50-70°F</span>
+            </div>
+            <div class="color-item warm">
+                <span class="color-swatch"></span>
+                <span class="color-desc">Warm: 70-85°F</span>
+            </div>
+            <div class="color-item hot">
+                <span class="color-swatch"></span>
+                <span class="color-desc">Hot: Above 85°F</span>
+            </div>
+            <div class="color-item humid">
+                <span class="color-swatch"></span>
+                <span class="color-desc">Humid: Above 70%</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="region-highlights">
+    <h2>Global Weather Highlights</h2>
+    <div class="weather-grid">
+        {% for region, data in region_highlights.items() %}
+        {% if data and "error" not in data %}
+        {% set temp = data.main.temp|round %}
+        {% set temp_class = "hot" if temp > 85 else ("warm" if temp > 70 else ("moderate" if temp > 50 else "cold")) %}
+        {% set humid_class = "humid" if data.main.humidity > 70 else "" %}
+        {% set condition = data.weather[0].main|lower %}
+        
+        <div class="weather-card {{ temp_class }} {{ humid_class }}">
+            <div class="weather-card-header">
+                <h3>{{ region }}: {{ data.name }}, {{ data.sys.country }}</h3>
+            </div>
+            <div class="weather-card-body">
+                <p class="weather-desc">{{ data.weather[0].description }}</p>
+                <p class="temp">{{ temp }}°F</p>
+                <div class="weather-details">
+                    <p>Feels Like: {{ data.main.feels_like|round }}°F</p>
+                    <p>Humidity: {{ data.main.humidity }}%</p>
+                    <p>Wind: {{ data.wind.speed }} mph</p>
+                </div>
+                <p class="updated">Updated: {{ data.timestamp }}</p>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</section>
+
+<section class="extreme-weather">
+    <h2>Extreme Weather Conditions</h2>
+    <div class="extreme-grid">
+        {% for type, data in extreme_weather.items() %}
+        <div class="extreme-card">
+            <div class="extreme-card-header">
+                {% if type == "hottest" %}🔥 Hottest
+                {% elif type == "coldest" %}❄️ Coldest
+                {% elif type == "windiest" %}💨 Windiest
+                {% elif type == "most_humid" %}💧 Most Humid{% endif %}
+            </div>
+            <div class="extreme-card-body">
+                <h3>{{ data.name }}, {{ data.sys.country }}</h3>
+                {% if type in ["hottest", "coldest"] %}
+                <p class="extreme-value">Temperature: {{ data.main.temp|round }}°F</p>
+                {% elif type == "windiest" %}
+                <p class="extreme-value">Wind Speed: {{ data.wind.speed }} mph</p>
+                {% elif type == "most_humid" %}
+                <p class="extreme-value">Humidity: {{ data.main.humidity }}%</p>
+                {% endif %}
+                <p class="weather-desc">{{ data.weather[0].description }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<a href="{{ url_for('refresh') }}" class="refresh-button">Refresh Global Data</a>
+
+{% endblock %}

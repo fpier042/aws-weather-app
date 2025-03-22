@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Weather for {{ city }}{% endblock %}
+{% block content %}
+
+<div class="search-controls">
+    <a href="{{ url_for('home') }}" class="home-button">Back to Dashboard</a>
+</div>
+
+<h2 class="section-title">Weather for {{ city }}</h2>
+
+{% if "error" in weather %}
+<div class="weather-card">
+    <div class="weather-card-header error-header">
+        Error: {{ weather.city if weather.city else city }} not found
+    </div>
+    <div class="weather-card-body">
+        <p>{{ weather.error }}</p>
+        <p>Please check the city name and try again.</p>
+    </div>
+</div>
+{% else %}
+{% set temp = weather.main.temp|round %}
+{% set temp_class = "hot" if temp > 85 else ("warm" if temp > 70 else ("moderate" if temp > 50 else "cold")) %}
+{% set humid_class = "humid" if weather.main.humidity > 70 else "" %}
+{% set condition = weather.weather[0].main|lower %}
+
+<div class="weather-card large {{ temp_class }} {{ humid_class }}">
+    <div class="weather-card-header">
+        <h3>{{ weather.name }}, {{ weather.sys.country }}</h3>
+        <button class="remove-city" data-city="{{ city }}">✕</button>
+    </div>
+    <div class="weather-card-body">
+        <div class="weather-main">
+            <p class="weather-desc">{{ weather.weather[0].description }}</p>
+            <p class="temp">{{ temp }}°F</p>
+            <p class="feels-like">Feels Like: {{ weather.main.feels_like|round }}°F</p>
+        </div>
+        <div class="weather-details-grid">
+            <div class="detail-item">
+                <span class="detail-label">Humidity</span>
+                <span class="detail-value">{{ weather.main.humidity }}%</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Wind</span>
+                <span class="detail-value">{{ weather.wind.speed }} mph</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Pressure</span>
+                <span class="detail-value">{{ weather.main.pressure }} hPa</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Visibility</span>
+                <span class="detail-value">{{ (weather.visibility / 1609)|round(1) }} mi</span>
+            </div>
+        </div>
+        <p class="updated">Updated: {{ weather.timestamp }}</p>
+    </div>
+</div>
+{% endif %}
+
+{% if city_weather_data %}
+<section class="recent-searches">
+    <h2>Recent Searches</h2>
+    <div class="weather-grid">
+        {% for data in city_weather_data %}
+        {% if "error" not in data %}
+        {% set temp = data.main.temp|round %}
+        {% set temp_class = "hot" if temp > 85 else ("warm" if temp > 70 else ("moderate" if temp > 50 else "cold")) %}
+        {% set humid_class = "humid" if data.main.humidity > 70 else "" %}
+        {% set condition = data.weather[0].main|lower %}
+        
+        <div class="weather-card {{ temp_class }} {{ humid_class }}">
+            <div class="weather-card-header">
+                <h3>{{ data.name }}, {{ data.sys.country }}</h3>
+                <button class="remove-city" data-city="{{ data.name }}">✕</button>
+            </div>
+            <div class="weather-card-body">
+                <p class="weather-desc">{{ data.weather[0].description }}</p>
+                <p class="temp">{{ temp }}°F</p>
+                <div class="weather-details">
+                    <p>Humidity: {{ data.main.humidity }}%</p>
+                    <p>Wind: {{ data.wind.speed }} mph</p>
+                </div>
+                <p class="updated">Updated: {{ data.timestamp }}</p>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const removeButtons = document.querySelectorAll('.remove-city');
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const city = this.dataset.city;
+            const card = this.closest('.weather-card');
+            
+            fetch(`/remove_city/${city}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    card.style.opacity = '0';
+                    setTimeout(() => {
+                        card.remove();
+                    }, 300);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+});
+</script>
+{% endblock %}
