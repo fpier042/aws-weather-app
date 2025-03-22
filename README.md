@@ -1,4 +1,4 @@
-# 🌤️ AWS (Amazon Web Services) Weather Dashboard ☔️ (30 Days Dev Ops Challenge)
+# 🌤️ Dynamic Weather Dashboard ☔️ (Flask-Based Weather Application)
 
 ## 📖 Table of Contents 📖
 
@@ -9,211 +9,228 @@
   - [Prerequisites](#prerequisites)
   - [Installation Process](#installation-process)
 - [User Guides](#user-guides)
-- [Application Usage](#application-usage)
+  - [Application Usage](#application-usage)
 - [Code Explanation](#code-explanation)
 - [Incorporating Docker](#incorporating-docker)
 - [Common Issues and Solutions](#common-issues-and-solutions)
 - [Potential Future Improvements](#potential-future-improvements)
 - [How to Contribute](#how-to-contribute)
 - [License](#license)
-- [Contact](#contact)
+- [Contact Information](#contact-information)
 
 ## 👨🏾‍💻 Project Intro
 
-The following code is for an interactive web application (using Python and Flask) that allows users to fetch and display current (real-time and location-based) weather data for multiple cities. It utilizes the OpenWeather API (application programming interface) to retrieve factual weather information, stores this data in an AWS S3 bucket, and also generates an HTML file of this data.
+This Weather Dashboard is a Flask-based web application that provides users with real-time weather information for multiple cities. The application uses the OpenWeather API to fetch current weather data and displays it in an easy-to-read format. Users can search for cities, track extreme weather events, and maintain a history of their searches.
 
-This project taught me (and demonstrates to other learners) how to integrate various technologies and services, including:
+Overall, the project demonstrates how to integrate various technologies and services, including:
 
 - Python programming 🐍
 - API integration (OpenWeather) ⛈️
-- AWS services (IAM, S3) 🚚
 - Environment variable management 🌱
 - Web application development, with Flask 🌐
+- Session management and caching 💾
 - Docker containerization ⚓️
 
-And aims to provide the user valuable insight into how best to create a functional web application which is also cloud-integrated, whether you're a developer learning more about Python and AWS (like myself), or someone who simply likes to nerd out about the weather!
+And aims to provide the user valuable insight, whether you're a developer learning more about Python and web development (like myself), or someone who simply likes to nerd out about the weather!
 
 ## ⚙️ Project Structure
 
-The project, overall, is organized as follows:
-
 ```
-└── ./
-    ├── weather_dashboard.py  # Main Flask application
-    ├── data
-    │   └── cities.json      # Default cities configuration 
-    ├── .env                 # Environment variables
-    ├── Dockerfile           # For Docker containerization
-    └── requirements.txt     # Python dependencies required
+dynamic-weather-dashboard/
+│
+├── weather_dashboard.py        # Main application file
+├── .env                        # Environment variables
+├── requirements.txt            # Python dependencies
+├── README.md                   # This file
+│
+├── static/                     # Static files
+│   ├── css/
+│   │   └── styles.css          # CSS styling
+│   ├── js/
+│   │   └── script.js           # JavaScript functionality
+│   └── images/                 # Image assets
+│
+└── templates/                  # HTML templates
+    ├── base.html               # Base template with common elements
+    ├── home.html               # Home page template
+    └── search_results.html     # Search results template
 ```
 
-## ⚡️Application Features
+## ⚡️ Application Features
 
-- Retrieves real-time weather data for multiple cities
-- Displays temperature (°F), feels-like temperature, humidity, and various weather conditions
-- Automatically stores the weather data in the user's AWS S3 bucket
-- Provides a simple web interface to view the current weather data
-- Generates and saves an HTML dashboard to S3 for future reference
-- Supports weather tracking across multiple cities (configurable via cities.json)
-- Provides a timestamp for all data, to assist the user with keeping track of their data history
+- **Real-time Weather Data**: Get current weather conditions for any city (temperature (°F), humidity, wind speed, and various weather conditions). Also includes timestamp information for all weather data
+- **Search Functionality**: Quick and intuitive city search
+- **Multi-City Dashboard**: Track weather for multiple cities simultaneously
+- **Regional Weather Highlights**: View weather highlights for specific regions and different continents
+- **Extreme Weather Tracking**: Monitor cities experiencing extreme weather conditions (hottest, coldest, windiest, most humid)
+- **User History**: Session-based tracking of your search history, for easy reference
+- **Responsive Design**: Mobile-friendly interface that works on all devices
+- **City Removal**: Easily remove cities from your dashboard
 
 ## 🛠️ Getting Started
 
-### 🔖Prerequisites
+### 🔖 Prerequisites
 
-Before beginning the project, ensure you have the following set up on your machine/computer 🖥️:
+- Python 3.7+
+- Flask
+- OpenWeather API key
+- Git (for cloning the repository)
 
-- Python 3.7 or higher
-- An OpenWeather API key (sign up at [OpenWeather](https://openweathermap.org/))
-- An AWS account with IAM & S3 access
-- AWS CLI (command line interface) configured with appropriate permissions
-- A GitHub account with SSH authentication [https://docs.github.com/en/authentication/connecting-to-github-with-ssh]
-- Basic knowledge of HTML & CSS
-- Docker (for containerized deployment)
-
-### 📘 User Guides
-
-And here are some general resources to provide you further context and ground you as you move through the project:
-
-- [AWS IAM Documentatation](https://docs.aws.amazon.com/iam/): How to use AWS IAM
-- [AWS S3 Documentation](https://docs.aws.amazon.com/s3/index.html): How to use AWS S3
-- [AWS CLI Configuration](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html): How to configure the AWS CLI
-- [Docker Installation Guide](https://docs.docker.com/get-docker/): How to install Docker
-- [Flask Documentation](https://flask.palletsprojects.com/): How to use Flask web framework
-
-### 💾 Installation Process for your IDE (Integrated Developer Environment)
+### 💾 Installation Process
 
 1. Clone the repository:
-```
-git clone https://github.com/fpier042/aws-weather-app.git
-cd aws-weather-app
+```bash
+git clone https://github.com/fpier042/dynamic-weather-dashboard.git
+cd dynamic-weather-dashboard
 ```
 
-2. Install the required dependencies:
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
+
+3. Install dependencies:
+```bash
 pip install -r requirements.txt
 ```
 
-3. Set up your environment variables: Create a `.env` file in the project root, and add these:
+4. Create a `.env` file in the root directory with the following content:
 ```
 OPENWEATHER_API_KEY=your_openweather_api_key
-AWS_BUCKET_NAME=your_s3_bucket_name
-AWS_ACCESS_KEY_ID=your_aws_access_key_id
-AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
-AWS_DEFAULT_REGION=your_aws_region
+SECRET_KEY=your_secret_key_for_flask_sessions
 ```
 
-4. Configure your AWS credentials:
-   Double-check that your AWS credentials are properly set up in the `.env` file.
-
-Reminder: The application also utilizes the AWS CLI to interact with AWS S3. Use the command 'aws configure' to add it directly to ~/.aws/credentials in AWS CLI.
-
-## 🔋 Usage
-
-### To run the Weather Dashboard in Python:
-
-1. Navigate to the project directory
-```
-cd aws-weather-app
-```
-
-2. Run the main script:
-```
+5. Run the application:
+```bash
 python weather_dashboard.py
 ```
 
-3. Open your web browser and navigate to:
-```
-http://localhost:5000 (or 5001, 5002, etc, if you run into any issues with the current port)
-```
+6. Open your browser and navigate to http://localhost:5000
 
-The application will fetch weather data for the default cities (Philadelphia, Seattle, New York) or load cities from a cities.json file, if available. The generated HTML dashboard will also be pushed to your S3 bucket.
+## 📘 User Guides
+
+And here are some general resources to provide you further context and ground you as you move through the project:
+
+- OpenWeather API Documentation: [https://openweathermap.org/api/one-call-api] 
+- Flask Documentation: [https://flask.palletsprojects.com/en/stable/]
+- Python Requests Library, for API calls: [https://docs.python-requests.org/en/latest/]
+- Docker Installation Guide: [https://docs.docker.com/get-started/get-docker/]
+
+### 🔋 Application Usage
+
+1. **Home Page**: Upon loading, you'll see the dashboard with any previously saved cities
+2. **Adding Cities**: Use the search bar at the top to find and add new cities
+3. **City Weather Cards**: Each city is displayed as a card with the following information:
+   - City name and country
+   - Current temperature
+   - Weather condition with icon
+   - Humidity, wind speed, and pressure
+4. **Removing Cities**: Click the "X" button on any city card to remove it from your dashboard
+5. **Regional Weather**: Explore weather highlights by region
+6. **Extreme Weather**: View cities experiencing extreme weather conditions
+7. **Weather History**: Track the cities you've searched for in your current session
 
 ## 📝 Code Explanation 📝
 
 ### weather_dashboard.py
-
 This is the core of the application. Its main components are:
 
-- **WeatherDashboard class**:
-  - Initializes the API key and AWS S3 client
-  - Validates environment variables
-  - Manages S3 bucket creation
+#### WeatherService class:
+- Initializes the API key
+- Handles weather data fetching from OpenWeather API
+- Formats response data with timestamps
 
-- **fetch_weather method**:
-  - Fetches weather data from the OpenWeather API
+#### Helper functions:
+- get_random_cities: Selects random cities for display
+- fetch_weather_data: Retrieves weather information for multiple cities
+- get_weather_highlights: Gets weather data by geographical region
+- get_extreme_weather: Identifies cities with extreme weather conditions
 
-- **save_to_s3 method**:
-  - Saves the weather data to an S3 bucket with a timestamp
+#### Flask application routes:
+- /: Home route displaying dashboard with regional highlights, random cities, and extreme weather
+- /search: Handles city search and displays results
+- /refresh: Refreshes the dashboard data
+- /remove_city: Removes a city from search history
 
-- **generate_html method**:
-  - Generates an HTML file to visualize weather data
+#### Session management:
+- Stores user's search history
+- Caches dashboard data temporarily
+- Maintains user preferences across requests
 
-- **save_html_to_s3 method**:
-  - Saves the HTML file to an S3 bucket
+The application uses:
+- Flask sessions to store user data temporarily
+- The OpenWeather API to fetch current weather data
+- Bootstrap for responsive styling
+- JavaScript for dynamic interactions
 
-- **Flask application routes**:
-  - Renders the weather dashboard in the web browser
-  - Orchestrates the weather data fetching and saving process
+## ⚓️ Incorporating Docker
 
-## Incorporating Docker ⚓️
+To containerize this application with Docker:
 
-To run the Weather Dashboard in Docker:
+1. Create a `Dockerfile` in the root directory:
+```Dockerfile
+FROM python:3.9-slim
 
-1. Build the docker image:
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+ENV FLASK_APP=weather_dashboard.py
+ENV FLASK_RUN_HOST=0.0.0.0
+
+EXPOSE 5000
+
+CMD ["flask", "run"]
 ```
+
+2. Build and run the Docker container:
+```bash
 docker build -t weather-dashboard .
-```
-
-2. Run the docker container:
-```
-docker run --env-file .env -p 5001:5000 -it weather-dashboard
-```
-
-3. Access the dashboard in your web browser:
-```
-http://localhost:5001
+docker run -p 5000:5000 --env-file .env weather-dashboard
 ```
 
 ## 🚧 Common Issues and Solutions 🚧
 
-Here are some challenges you might encounter:
+### API Key Issues
+**Problem**: "Unable to fetch weather data" error message.
+**Solution**: Verify your OpenWeather API key in the `.env` file is correct and activated.
 
-### AWS Credentials Configuration
+### City Not Found
+**Problem**: Search returns "City not found" error.
+**Solution**: Check the spelling of the city name or try adding the country code (e.g., "London,UK").
 
-- **Issue**: AWS credentials are not recognized
-- **Solution**: Ensure AWS CLI is properly configured with `aws configure` and credentials are stored in `~/.aws/credentials` or properly set in your `.env` file
+### Session Storage
+**Problem**: Cities disappear after server restart.
+**Solution**: This is expected behavior as the app uses session storage. For persistent storage, consider implementing a database solution.
 
-### S3 Bucket Permission Issues
-
-- **Issue**: Access denied when creating or accessing S3 bucket
-- **Solution**: Verify IAM user has appropriate S3 permissions (AmazonS3FullAccess or a custom policy)
-
-### Environment Variables Not Loading
-
-- **Issue**: Application unable to access environment variables
-- **Solution**: Verify `.env` file is in the correct location and properly formatted
+### API Key Configuration
+**Problem**: OpenWeather API key is not recognized.
+**Solution**: Double-check your .env file contains the correct API key and is properly loaded.
 
 ### Flask Application Not Accessible
+**Problem**: Cannot access the web interface after starting the application.
+**Solution**: Check that you're using the correct port and that no other applications are using it.
 
-- **Issue**: Cannot access the web interface after starting the application
-- **Solution**: Check that you're using the correct port (5001 if using Docker with the command above, or 5000 if running directly)
-
-### GitHub SSH Authentication
-
-- **Issue**: Unable to push code to repository
-- **Solution**: Follow the SSH key setup guide in the prerequisites section
+### Weather Data Not Loading
+**Problem**: Weather information not displaying or showing errors.
+**Solution**: Check your internet connection and verify the OpenWeather API service status.
 
 ## 🛸 Potential Future Improvements
 
-- Implement a more advanced graphical user interface (GUI) for a better user experience
-- Add historical data analysis and visualization capabilities
+- Implement weather forecast data for upcoming days
+- Add weather maps and radar visualization
+- Create user accounts for personalized experiences
+- Add support for different temperature units (°C/°F)
+- Implement geolocation to automatically detect the user's city
+- Add weather alerts and notifications
+- Create mobile-responsive design for better experience on smartphones
+- Implement dark/light mode toggle
+- Add historical weather data charts and trends
 - Integrate with additional weather APIs for more comprehensive data
-- Implement user authentication for personalized experiences
-- Create a more interactive web application with real-time updates
-- Add support for geolocation to automatically detect the user's city
-- Implement weather alerts and notifications
-- Add a forecast feature to show weather predictions for upcoming days
 
 ## 🫱🏻‍🫲🏾 How to Contribute
 
@@ -225,12 +242,12 @@ Contributions are what allow for the open-source community to serve as a valuabl
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 🪪License
+## 🪪 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 📲 Contact Information
 
-Felton Pierre: [Linkedin](www.linkedin.com/in/felton-pierre-90)
+Felton Pierre: Linkedin [www.linkedin.com/in/felton-pierre-90]
 
-Project Link: https://github.com/fpier042/aws-weather-app/
+Project Link: https://github.com/fpier042/dynamic-weather-dashboard/
