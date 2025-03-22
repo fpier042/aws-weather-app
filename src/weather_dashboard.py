@@ -1,6 +1,5 @@
 import os
 import json
-import boto3
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
@@ -8,15 +7,16 @@ from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
-class WeatherDashboard:
-    def __init__(self):
-        required_vars = [
-            'OPENWEATHER_API_KEY', 'AWS_BUCKET_NAME', 
-            'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_DEFAULT_REGION'
-        ]
-        missing_vars = [var for var in required_vars if not os.getenv(var)]
-        if missing_vars:
-            raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+POPULAR_CITIES = [
+    "New York", "London", "Tokyo", "Paris", "Sydney", "Berlin", "Toronto", 
+    "Rome", "Madrid", "Dubai", "Singapore", "Hong Kong", "Bangkok", "Istanbul",
+    "Moscow", "Beijing", "Seoul", "Mexico City", "Rio de Janeiro", "Cairo",
+    "Mumbai", "Cape Town", "Buenos Aires", "San Francisco", "Chicago", "Seattle",
+    "Miami", "Boston", "Philadelphia", "Dallas", "Austin", "Denver", "Atlanta",
+    "Las Vegas", "Vancouver", "Montreal", "Amsterdam", "Vienna", "Stockholm",
+    "Prague", "Barcelona", "Lisbon", "Athens", "Dublin", "Helsinki", "Zurich",
+    "Auckland", "Jerusalem", "Honolulu", "Havana"
+]
 
         self.api_key = os.getenv('OPENWEATHER_API_KEY')
         self.bucket_name = os.getenv('AWS_BUCKET_NAME')
@@ -49,76 +49,6 @@ class WeatherDashboard:
             print(f"Error fetching weather data for {city}: {e}")
             return {"error": str(e)}
 
-    def save_to_s3(self, weather_data, city):
-        if not weather_data or "error" in weather_data:
-            return False
-        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-        file_name = f"weather-data/{city}-{timestamp}.json"
-        try:
-            weather_data['timestamp'] = timestamp
-            self.s3_client.put_object(
-                Bucket=self.bucket_name,
-                Key=file_name,
-                Body=json.dumps(weather_data),
-                ContentType='application/json'
-            )
-            print(f"Successfully saved JSON data for {city} to S3")
-            return True
-        except Exception as e:
-            print(f"Error saving JSON to S3: {e}")
-            return False
-
-    def generate_html(self, weather_data_list):
-        html_content = """
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>Weather Dashboard</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                table { border-collapse: collapse; width: 100%; max-width: 800px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f2f2f2; }
-                h1 { color: #333; }
-            </style>
-        </head>
-        <body>
-            <h1>Weather Dashboard</h1>
-            <table>
-                <tr>
-                    <th>City</th>
-                    <th>Temperature (°F)</th>
-                    <th>Feels Like (°F)</th>
-                    <th>Humidity (%)</th>
-                    <th>Conditions</th>
-                    <th>Timestamp</th>
-                </tr>
-        """
-        for data in weather_data_list:
-            if "error" not in data:
-                city = data.get('name', 'Unknown')
-                temp = data['main'].get('temp', 'N/A')
-                feels_like = data['main'].get('feels_like', 'N/A')
-                humidity = data['main'].get('humidity', 'N/A')
-                description = data['weather'][0].get('description', 'N/A') if data.get('weather') else 'N/A'
-                timestamp = data.get('timestamp', 'N/A')
-                html_content += f"""
-                <tr>
-                    <td>{city}</td>
-                    <td>{temp}</td>
-                    <td>{feels_like}</td>
-                    <td>{humidity}</td>
-                    <td>{description}</td>
-                    <td>{timestamp}</td>
-                </tr>
-                """
-        html_content += """
-            </table>
-        </body>
-        </html>
-        """
-        return html_content
 
     def save_html_to_s3(self, html_content):
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -136,18 +66,6 @@ class WeatherDashboard:
             print(f"Error saving HTML to S3: {e}")
             return False
 
-def fetch_and_save():
-    dashboard = WeatherDashboard()
-    dashboard.create_bucket_if_not_exists()
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    cities_file = os.path.join(script_dir, '..', 'data', 'cities.json')
-    try:
-        with open(cities_file) as file_input:
-            data = json.load(file_input)
-            cities = data['cities']
-    except (FileNotFoundError, json.JSONDecodeError):
-        print("cities.json not found or invalid, using default cities")
-        cities = ["Philadelphia", "Seattle", "New York"]
 
     weather_data_list = []
     for city in cities:
@@ -165,8 +83,6 @@ def fetch_and_save():
             dashboard.save_to_s3(weather_data, city)
         weather_data_list.append(weather_data)
 
-    html_content = dashboard.generate_html(weather_data_list)
-    dashboard.save_html_to_s3(html_content)
     return weather_data_list
 
 @app.route('/')
